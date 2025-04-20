@@ -113,7 +113,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
 
  private:
   // The last parameter (buffer_size) was missing, causing the compilation error
-  DynamicPGMIndex<KeyType, uint64_t, SearchClass, PGMIndex<KeyType, SearchClass, pgm_error, 16>, 18> pgm_;
+  DynamicPGMIndex<KeyType, uint64_t, SearchClass, PGMIndex<KeyType, SearchClass, pgm_error, 16>> pgm_;
   mutable LIPP<KeyType, uint64_t> lipp_;
   
   // Threshold parameters
