@@ -13,12 +13,12 @@
 #include "pgm_index_dynamic.hpp"
 #include "./lipp/src/core/lipp.h"
 
-template <class KeyType, class SearchClass, size_t pgm_error = 64>
+template <class KeyType, class SearchClass, size_t pgm_error = 64, size_t flush_threshold_percent = 5>
 class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
  public:
-  HybridPGMLIPP(const std::vector<int>& params) {
-    // Set default flush threshold to 5% if not provided
-    flush_threshold_ = params.size() > 0 ? params[0] : 5;
+  HybridPGMLIPP(const std::vector<int>& params = std::vector<int>()) {
+    // Use the template parameter as default, but allow override from params
+    flush_threshold_ = params.size() > 0 ? params[0] : flush_threshold_percent;
   }
 
   uint64_t Build(const std::vector<KeyValue<KeyType>>& data, size_t num_threads) {
