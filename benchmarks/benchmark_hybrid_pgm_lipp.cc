@@ -1,4 +1,5 @@
-#include "benchmarks/benchmark_hybrid_pgm_lipp.h"
+// #include "benchmarks/benchmark_hybrid_pgm_lipp.h"
+#include "benchmarks/benchmark_pgm.h"
 
 #include "benchmark.h"
 #include "benchmarks/common.h"
