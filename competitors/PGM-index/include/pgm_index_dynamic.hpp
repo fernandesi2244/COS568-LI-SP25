@@ -446,10 +446,11 @@ public:
         for (; i < used_levels; ++i) {
             auto &level = get_level(i);
             for (auto it = level.begin(); it != level.end(); ++it)
-                if (!it->deleted())
+                if (!it->deleted()) {
                     std::vector<std::pair<typename LevelType::const_iterator, int16_t>> initial_pairs;
                     return iterator(this, it, i, initial_pairs);
                     // return iterator(this, it, i)
+                }
         }
         return end();
     }
