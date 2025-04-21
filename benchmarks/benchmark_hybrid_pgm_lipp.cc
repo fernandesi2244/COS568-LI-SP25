@@ -12,7 +12,6 @@ void benchmark_64_hybrid_pgm_lipp(tli::Benchmark<uint64_t>& benchmark,
     util::fail("Hybrid PGM-LIPP's hyperparameter cannot be set");
   }
   else{
-    // Different PGM error bounds with default flush threshold (5%)
     benchmark.template Run<HybridPGMLIPP<uint64_t, Searcher, 16>>();
     benchmark.template Run<HybridPGMLIPP<uint64_t, Searcher, 32>>();
     benchmark.template Run<HybridPGMLIPP<uint64_t, Searcher, 64>>();
