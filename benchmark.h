@@ -481,6 +481,8 @@ class Benchmark {
   template <class Index>
   void PrintResult(const Index* index) {
     if (run_failed){
+      // Print error message.
+      std::cerr << "Error: " << index->name() << " failed." << std::endl;
       return;
     }
 

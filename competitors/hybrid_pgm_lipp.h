@@ -7,11 +7,12 @@
 #include <vector>
 #include <mutex>
 #include <atomic>
+#include <memory>
 
 #include "../util.h"
 #include "base.h"
-#include "pgm_index_dynamic.hpp"
-#include "./lipp/src/core/lipp.h"
+#include "dynamic_pgm_index.h"
+#include "lipp.h"
 
 template <class KeyType, class SearchClass, size_t pgm_error = 64> //, size_t flush_threshold_percent = 5>
 class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
