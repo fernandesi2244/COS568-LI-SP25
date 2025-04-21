@@ -447,7 +447,9 @@ public:
             auto &level = get_level(i);
             for (auto it = level.begin(); it != level.end(); ++it)
                 if (!it->deleted())
-                    return iterator(this, it, i, std::vector<std::pair<typename LevelType::const_iterator, int16_t>>{});
+                    std::vector<std::pair<typename LevelType::const_iterator, int16_t>> initial_pairs;
+                    return iterator(this, it, i, initial_pairs);
+                    // return iterator(this, it, i)
         }
         return end();
     }
