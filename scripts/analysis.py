@@ -2,17 +2,17 @@ import pandas as pd
 
 
 def result_analysis():
-    tasks = ['fb', 'osmc', 'books']
+    tasks = ['fb'] #, 'osmc', 'books']
     indexs = ['BTree', 'DynamicPGM', 'LIPP', 'HybridPGMLIPP']
     # Create dictionaries to store throughput data for each index
-    lookuponly_throughput = {}
-    insertlookup_throughput = {}
+    # lookuponly_throughput = {}
+    # insertlookup_throughput = {}
     insertlookup_mix1_throughput = {}
     insertlookup_mix2_throughput = {}
     
     for index in indexs:
-        lookuponly_throughput[index] = {}
-        insertlookup_throughput[index] = {"lookup": {}, "insert": {}}
+        # lookuponly_throughput[index] = {}
+        # insertlookup_throughput[index] = {"lookup": {}, "insert": {}}
         insertlookup_mix1_throughput[index] = {}
         insertlookup_mix2_throughput[index] = {}
     
@@ -167,11 +167,3 @@ def result_analysis():
 
 if __name__ == "__main__":
     result_analysis()
-        
-
-
-        
-        
-        
-        
-    
