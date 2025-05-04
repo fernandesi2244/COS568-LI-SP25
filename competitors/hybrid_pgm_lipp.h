@@ -330,26 +330,33 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
 
     std::cout << "Flushing " << data_to_flush.size() << " items from PGM to LIPP." << std::endl;
     
+    std::cout << "Beginning flushed_keys creation." << std::endl;
     // Track flushed keys for later removal
     std::unordered_set<KeyType> flushed_keys;
     for (const auto& item : data_to_flush) {
         flushed_keys.insert(item.key);
     }
+    std::cout << "Finished flushed_keys creation." << std::endl;
     
+    std::cout << "Sorting data_to_flush." << std::endl;
     // Sort by key for better performance
     std::sort(data_to_flush.begin(), data_to_flush.end(),
         [](const KeyValue<KeyType>& a, const KeyValue<KeyType>& b) {
             return a.key < b.key;
         });
+    std::cout << "Finished sorting data_to_flush." << std::endl;
     
+    std::cout << "Flushing data_to_flush to LIPP." << std::endl;
     // Use bulk insertion with exclusive lock on LIPP
     {
         std::unique_lock<std::shared_mutex> lipp_lock(lipp_mutex_);
         lipp_.BulkInsert(data_to_flush, thread_id);
     }
+    std::cout << "Finished flushing data_to_flush to LIPP." << std::endl;
     
     // Remove flushed items from PGM data structures
     {
+      std::cout << "Removing "<< flushed_keys.size() << " items from PGM data." << std::endl;
       std::unique_lock<std::shared_mutex> lock(pgm_mutex_);
       
       // Only remove keys that were successfully flushed
@@ -357,6 +364,9 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
                                   [&flushed_keys](const KeyValue<KeyType>& item) {
                                     return flushed_keys.find(item.key) != flushed_keys.end();
                                   });
+
+      std::cout << "Removed " << std::distance(new_end, pgm_data_.end()) 
+                << " items from PGM data." << std::endl;
       
       size_t removed_count = std::distance(new_end, pgm_data_.end());
       pgm_data_.erase(new_end, pgm_data_.end());
@@ -369,9 +379,12 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
       
       // Insert remaining items individually
       if (!pgm_data_.empty()) {
+        std::cout << "Rebuilding PGM index with " << pgm_data_.size() << " items." << std::endl;
         for (const auto& item : pgm_data_) {
           pgm_.Insert(item, thread_id);
         }
+
+        std::cout << "Finished rebuilding PGM index." << std::endl;
       }
     }
     
