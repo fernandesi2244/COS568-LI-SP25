@@ -13,6 +13,7 @@
 #include <thread>
 #include <queue>
 #include <chrono>
+#include <unordered_set>
 
 #include "../util.h"
 #include "base.h"
@@ -197,7 +198,11 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     std::vector<KeyValue<KeyType>> data_to_flush;
     {
       std::lock_guard<std::mutex> lock(pgm_mutex_);
+      // Create a copy of current data, but DON'T clear pgm_data_ yet
       data_to_flush = pgm_data_;
+      
+      // We're taking a snapshot, but keeping original data intact
+      // We will only remove these specific items later
     }
     
     // Sort the data for batch insertion
@@ -210,6 +215,10 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     const size_t total_items = data_to_flush.size();
     size_t items_processed = 0;
     
+    // Keep track of successfully flushed keys
+    std::vector<KeyType> successfully_flushed_keys;
+    successfully_flushed_keys.reserve(total_items);
+    
     while (items_processed < total_items) {
       // Determine the size of the current batch
       size_t batch_end = std::min(items_processed + batch_size_, total_items);
@@ -219,27 +228,47 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
       for (size_t i = 0; i < current_batch_size; i++) {
         const auto& item = data_to_flush[items_processed + i];
         lipp_.Insert(item, thread_id);
+        
+        // Keep track of successfully flushed keys
+        successfully_flushed_keys.push_back(item.key);
       }
       
       items_processed += current_batch_size;
       
       // Periodically check if we should pause flushing
-      // to allow other operations to proceed
       if (items_processed % (batch_size_ * 5) == 0) {
         // Short sleep to yield CPU
         std::this_thread::sleep_for(std::chrono::microseconds(1));
       }
     }
     
-    // All data flushed, now reset PGM
+    // Only remove the items we've successfully flushed
     {
       std::lock_guard<std::mutex> lock(pgm_mutex_);
-      // Clear PGM data
-      pgm_data_.clear();
-      // Reset PGM size counter
-      pgm_size_ = 0;
-      // Reset PGM index
-      pgm_ = DynamicPGM<KeyType, SearchClass, pgm_error>(std::vector<int>());
+      
+      // Remove only the flushed items from pgm_data_
+      // This preserves any new items added during the flush
+      if (!successfully_flushed_keys.empty()) {
+        // Create a set for efficient lookup
+        std::unordered_set<KeyType> flushed_keys_set(
+            successfully_flushed_keys.begin(), successfully_flushed_keys.end());
+        
+        // Remove flushed items from pgm_data_
+        auto new_end = std::remove_if(pgm_data_.begin(), pgm_data_.end(),
+            [&flushed_keys_set](const KeyValue<KeyType>& item) {
+                return flushed_keys_set.count(item.key) > 0;
+            });
+        pgm_data_.erase(new_end, pgm_data_.end());
+        
+        // Update size
+        pgm_size_ = pgm_data_.size();
+        
+        // Rebuild PGM with remaining items
+        pgm_ = DynamicPGM<KeyType, SearchClass, pgm_error>(std::vector<int>());
+        for (const auto& item : pgm_data_) {
+          pgm_.Insert(item, thread_id);
+        }
+      }
     }
     
     // Mark flushing as complete
