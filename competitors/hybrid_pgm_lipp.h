@@ -232,6 +232,16 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
         should_flush = (pgm_size_.load(std::memory_order_relaxed) >= flush_threshold_count_);
       }
     }
+
+    std::cout << "Thread " << thread_id << " - PGM size: " << pgm_size_.load(std::memory_order_relaxed) 
+              << ", Lookups since last flush: " << lookups_since_last_flush_.load(std::memory_order_relaxed) 
+              << ", Inserts since last flush: " << inserts_since_last_flush_.load(std::memory_order_relaxed) 
+              << ", Should flush: " << should_flush << std::endl;
+    
+    // Print if is flushing
+    if (is_flushing_.load(std::memory_order_relaxed)) {
+      std::cout << "Thread " << thread_id << " - Currently flushing." << std::endl;
+    }
     
     // If we should flush and no flush is currently in progress
     if (should_flush && !is_flushing_.exchange(true, std::memory_order_acquire)) {
