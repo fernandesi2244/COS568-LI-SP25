@@ -310,19 +310,24 @@ public:
             }
             return;
         }
+
+        std::cout << "It wasn't the case that the tree was empty or the number of insertions was small." << std::endl;
         
         // For large number of insertions, we'll use a hybrid approach
         // First collect all current keys and values
         T* existing_keys = new T[root->size];
         P* existing_values = new P[root->size];
         
+        std::cout << "Collecting existing keys and values..." << std::endl;
         // Get current data without destroying the tree
         scan_and_destory_tree(root, existing_keys, existing_values, false);
+        std::cout << "Collected existing keys and values." << std::endl;
         
         // Create a map to store key->value mappings, with newer values overwriting older ones
         // std::map automatically stores keys in sorted order
         std::map<T, P> key_value_map;
         
+        std::cout << "Creating key-value map..." << std::endl;
         // Add existing data to the map
         for (int i = 0; i < root->size; i++) {
             key_value_map[existing_keys[i]] = existing_values[i];
@@ -332,6 +337,8 @@ public:
         for (int i = 0; i < num_keys; i++) {
             key_value_map[vs[i].first] = vs[i].second;
         }
+
+        std::cout << "Created key-value map." << std::endl;
         
         // Convert map back to arrays for bulk loading
         const size_t total_keys = key_value_map.size();
@@ -345,11 +352,15 @@ public:
             new_values[i] = kv.second;
             i++;
         }
+
+        std::cout << "Converted map back to arrays." << std::endl;
         
         // The keys are already sorted due to std::map ordering
         // Now destroy the old tree and build a new one with the merged data
         destroy_tree(root);
+        std::cout << "Starting to build new tree..." << std::endl;
         root = build_tree_bulk(new_keys, new_values, total_keys);
+        std::cout << "New tree built." << std::endl;
         
         // Clean up
         delete[] existing_keys;
