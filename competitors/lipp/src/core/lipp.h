@@ -320,6 +320,7 @@ public:
         scan_and_destory_tree(root, existing_keys, existing_values, false);
         
         // Create a map to store key->value mappings, with newer values overwriting older ones
+        // std::map automatically stores keys in sorted order
         std::map<T, P> key_value_map;
         
         // Add existing data to the map
@@ -333,9 +334,11 @@ public:
         }
         
         // Convert map back to arrays for bulk loading
-        T* new_keys = new T[key_value_map.size()];
-        P* new_values = new P[key_value_map.size()];
+        const size_t total_keys = key_value_map.size();
+        T* new_keys = new T[total_keys];
+        P* new_values = new P[total_keys];
         
+        // Extract from map to arrays - map iteration is already in sorted key order
         int i = 0;
         for (const auto& kv : key_value_map) {
             new_keys[i] = kv.first;
@@ -343,9 +346,10 @@ public:
             i++;
         }
         
-        // Destroy the old tree and build a new one with the merged data
+        // The keys are already sorted due to std::map ordering
+        // Now destroy the old tree and build a new one with the merged data
         destroy_tree(root);
-        root = build_tree_bulk(new_keys, new_values, key_value_map.size());
+        root = build_tree_bulk(new_keys, new_values, total_keys);
         
         // Clean up
         delete[] existing_keys;
