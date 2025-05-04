@@ -37,9 +37,8 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   {
     // Parse parameters with validation
     flush_threshold_ = (params.size() > 0 && params[0] > 0) ? params[0] : 5;
-    batch_size_ = (params.size() > 1 && params[1] > 0) ? params[1] : 1000;
-    flushing_mode_ = (params.size() > 2 && params[2] >= 0 && params[2] <= 1) ? 
-        static_cast<FlushingMode>(params[2]) : WORKLOAD_ADAPTIVE;
+    flushing_mode_ = (params.size() > 1 && params[1] >= 0 && params[1] <= 1) ? 
+        static_cast<FlushingMode>(params[1]) : WORKLOAD_ADAPTIVE;
     
     // Initialize the flush worker thread
     flush_worker_active_ = true;
@@ -91,7 +90,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     return lipp_.EqualityLookup(lookup_key, thread_id);
   }
 
-  uint64_t RangeQuery(const KeyType& lower_key, const KeyType& upper_key, uint32_t thread_id) const {
+  uint64_t RangeQuery(const KeyType& lower_key, const KeyType& upper_key, uint32_t thread_id) {
     // Get results from PGM with read lock
     uint64_t pgm_res;
     {
@@ -158,7 +157,6 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     vec.push_back(SearchClass::name());
     vec.push_back(std::to_string(pgm_error));
     vec.push_back(std::to_string(flush_threshold_));
-    vec.push_back(std::to_string(batch_size_));
     vec.push_back(std::to_string(flushing_mode_));
     vec.push_back("flushes:" + std::to_string(flush_count_.load(std::memory_order_relaxed)));
     return vec;
@@ -177,7 +175,6 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   size_t initial_data_size_;
   size_t flush_threshold_; // Percentage of initial data size
   size_t flush_threshold_count_; // Absolute count for flushing
-  size_t batch_size_; // Number of items to flush in each batch
   FlushingMode flushing_mode_; // Flushing strategy
   
   // Atomic current state
@@ -280,7 +277,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     }
   }
 
-  // Perform an incremental flush from PGM to LIPP
+  // Perform an asynchronous flush from PGM to LIPP
   void PerformFlush(uint32_t thread_id) {
     // Reset operation counters using atomic store
     lookups_since_last_flush_.store(0, std::memory_order_relaxed);
@@ -336,7 +333,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
       // Rebuild PGM index efficiently
       pgm_ = DynamicPGM<KeyType, SearchClass, pgm_error>(std::vector<int>());
       
-      // Use bulk insert if possible, otherwise individual inserts
+      // Insert remaining items individually
       if (!pgm_data_.empty()) {
         for (const auto& item : pgm_data_) {
           pgm_.Insert(item, thread_id);
