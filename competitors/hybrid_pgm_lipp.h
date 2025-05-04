@@ -293,29 +293,28 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
       data_to_flush = pgm_data_;
     }
     
-    // Track flushed keys
-    std::unordered_set<KeyType> flushed_keys;
+    // If there's nothing to flush, we're done
+    if (data_to_flush.empty()) {
+      is_flushing_.store(false, std::memory_order_release);
+      return;
+    }
     
-    // Process in batches
-    const size_t total_items = data_to_flush.size();
-    for (size_t start = 0; start < total_items; start += batch_size_) {
-      // Calculate current batch size
-      size_t end = std::min(start + batch_size_, total_items);
-      
-      // Process this batch with exclusive lock on LIPP
-      {
+    // Track flushed keys for later removal
+    std::unordered_set<KeyType> flushed_keys;
+    for (const auto& item : data_to_flush) {
+        flushed_keys.insert(item.key);
+    }
+    
+    // Sort by key for better performance
+    std::sort(data_to_flush.begin(), data_to_flush.end(),
+        [](const KeyValue<KeyType>& a, const KeyValue<KeyType>& b) {
+            return a.key < b.key;
+        });
+    
+    // Use bulk insertion with exclusive lock on LIPP
+    {
         std::unique_lock<std::shared_mutex> lipp_lock(lipp_mutex_);
-        for (size_t i = start; i < end; i++) {
-          const auto& item = data_to_flush[i];
-          lipp_.Insert(item, thread_id);
-          flushed_keys.insert(item.key);
-        }
-      }
-      
-      // Periodically yield to allow other operations
-      if (start % (batch_size_ * 5) == 0 && start > 0) {
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
-      }
+        lipp_.BulkInsert(data_to_flush, thread_id);
     }
     
     // Remove flushed items from PGM data structures

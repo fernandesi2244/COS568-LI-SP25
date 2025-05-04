@@ -40,6 +40,26 @@ public:
     void Insert(const KeyValue<KeyType>& data, uint32_t thread_id) {
         lipp_.insert(data.key, data.value);
     }
+    
+    // Add a new method for bulk insertion
+    uint64_t BulkInsert(const std::vector<KeyValue<KeyType>>& data, uint32_t thread_id) {
+        std::vector<std::pair<KeyType, uint64_t>> loading_data;
+        loading_data.reserve(data.size());
+        for (const auto& itm : data) {
+            loading_data.push_back(std::make_pair(itm.key, itm.value));
+        }
+        
+        // Sort the data by key for better insertion performance
+        std::sort(loading_data.begin(), loading_data.end(), 
+            [](const std::pair<KeyType, uint64_t>& a, const std::pair<KeyType, uint64_t>& b) {
+                return a.first < b.first;
+            });
+        
+        return util::timing([&] { 
+            // Use the bulk_insert method we'll add to LIPP
+            lipp_.bulk_insert(loading_data.data(), loading_data.size());
+        });
+    }
 
     bool applicable(bool unique, bool range_query, bool insert, bool multithread, const std::string& ops_filename) {
         // LIPP only supports unique keys.
