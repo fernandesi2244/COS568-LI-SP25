@@ -132,9 +132,10 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
       // Update size with atomic to allow safe reading from other threads
       pgm_size_.fetch_add(1, std::memory_order_relaxed);
     }
-
+  
     // Check if we need to flush from PGM to LIPP
-    CheckAndTriggerFlush();
+    // Pass the actual thread_id from the caller
+    CheckAndTriggerFlush(thread_id);
   }
 
   std::string name() const { return "HybridPGMLIPP"; }
@@ -207,7 +208,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   std::queue<size_t> flush_queue_; // Queue for flush tasks (thread_id)
 
   // Trigger flush operation if needed
-  void CheckAndTriggerFlush() {
+  void CheckAndTriggerFlush(uint32_t thread_id) {
     // Skip if already flushing
     if (is_flushing_.load(std::memory_order_relaxed)) {
       return;
@@ -255,8 +256,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     // If we should flush and no flush is currently in progress
     if (should_flush && !is_flushing_.exchange(true, std::memory_order_acquire)) {
       // Signal the flush worker thread to start flushing
-      uint32_t thread_id = 0; // Default thread ID
-      
+      // Use the provided thread_id instead of hardcoded 0
       {
         std::lock_guard<std::mutex> lock(flush_mutex_);
         flush_queue_.push(thread_id);
