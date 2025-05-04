@@ -350,6 +350,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     // Use bulk insertion with exclusive lock on LIPP
     {
         std::unique_lock<std::shared_mutex> lipp_lock(lipp_mutex_);
+        std::cout << "Acquired lock on LIPP." << std::endl;
         lipp_.BulkInsert(data_to_flush, thread_id);
     }
     std::cout << "Finished flushing data_to_flush to LIPP." << std::endl;
