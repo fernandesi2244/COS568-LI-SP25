@@ -42,10 +42,10 @@ void benchmark_64_hybrid_pgm_lipp(tli::Benchmark<uint64_t>& benchmark, const std
     if (dataset_name.find("fb_100M") != std::string::npos) {
       if (is_insertion_heavy) {
         // Insertion-heavy (90% inserts) for Facebook dataset
-        std::vector<int> params_5_adaptive = {5, 1}; // 5% threshold, adaptive mode
-        std::vector<int> params_10_adaptive = {10, 1}; // 10% threshold, adaptive mode
-        std::vector<int> params_15_adaptive = {15, 1}; // 15% threshold, adaptive mode
-        std::vector<int> params_10_fixed = {10, 0}; // 10% threshold, fixed mode
+        std::vector<int> params_5_adaptive = {1, 1}; // 5% threshold, adaptive mode
+        std::vector<int> params_10_adaptive = {3, 1}; // 10% threshold, adaptive mode
+        std::vector<int> params_15_adaptive = {5, 1}; // 15% threshold, adaptive mode
+        std::vector<int> params_10_fixed = {3, 0}; // 10% threshold, fixed mode
         
         benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_5_adaptive);
         benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_10_adaptive);
@@ -72,9 +72,9 @@ void benchmark_64_hybrid_pgm_lipp(tli::Benchmark<uint64_t>& benchmark, const std
     else if (dataset_name.find("books_100M") != std::string::npos) {
       if (is_insertion_heavy) {
         // Insertion-heavy (90% inserts) for Books dataset
-        std::vector<int> params_5_adaptive = {5, 1}; // 5% threshold, adaptive mode
-        std::vector<int> params_10_adaptive = {10, 1}; // 10% threshold, adaptive mode
-        std::vector<int> params_15_adaptive = {15, 1}; // 15% threshold, adaptive mode
+        std::vector<int> params_5_adaptive = {1, 1}; // 5% threshold, adaptive mode
+        std::vector<int> params_10_adaptive = {3, 1}; // 10% threshold, adaptive mode
+        std::vector<int> params_15_adaptive = {5, 1}; // 15% threshold, adaptive mode
         
         benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_5_adaptive);
         benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_10_adaptive);
@@ -99,9 +99,9 @@ void benchmark_64_hybrid_pgm_lipp(tli::Benchmark<uint64_t>& benchmark, const std
     else if (dataset_name.find("osmc_100M") != std::string::npos) {
       if (is_insertion_heavy) {
         // Insertion-heavy (90% inserts) for OSMC dataset
-        std::vector<int> params_5_adaptive = {5, 1}; // 5% threshold, adaptive mode
-        std::vector<int> params_10_adaptive = {10, 1}; // 10% threshold, adaptive mode
-        std::vector<int> params_20_adaptive = {20, 1}; // 20% threshold, adaptive mode
+        std::vector<int> params_5_adaptive = {1, 1}; // 5% threshold, adaptive mode
+        std::vector<int> params_10_adaptive = {3, 1}; // 10% threshold, adaptive mode
+        std::vector<int> params_20_adaptive = {5, 1}; // 20% threshold, adaptive mode
         
         benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_5_adaptive);
         benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_10_adaptive);
@@ -123,9 +123,10 @@ void benchmark_64_hybrid_pgm_lipp(tli::Benchmark<uint64_t>& benchmark, const std
     }
     // Default for any other dataset
     else {
+      std::cout << "Unknown dataset: " << dataset_name << std::endl;
       if (is_insertion_heavy) {
         // Insertion-heavy default configuration
-        std::vector<int> params_10_adaptive = {10, 1}; // 10% threshold, adaptive mode
+        std::vector<int> params_10_adaptive = {3, 1}; // 10% threshold, adaptive mode
         benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_10_adaptive);
         benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_10_adaptive);
       } else {

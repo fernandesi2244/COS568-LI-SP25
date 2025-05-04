@@ -37,6 +37,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   {
     // Parse parameters with validation
     flush_threshold_ = (params.size() > 0 && params[0] > 0) ? params[0] : 5;
+    std::cout << "Flush threshold set to: " << flush_threshold_ << "%" << std::endl;
     flushing_mode_ = (params.size() > 1 && params[1] >= 0 && params[1] <= 1) ? 
         static_cast<FlushingMode>(params[1]) : WORKLOAD_ADAPTIVE;
     
@@ -65,6 +66,9 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     
     // Ensure minimum threshold to avoid too frequent flushes
     flush_threshold_count_ = std::max<size_t>(flush_threshold_count_, 100);
+
+    std::cout << "Initial data size: " << initial_data_size_ << std::endl;
+    std::cout << "Flush threshold count: " << flush_threshold_count_ << std::endl;
     
     // Build LIPP index with initial data - no lock needed during build
     return lipp_.Build(data, num_threads);
