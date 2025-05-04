@@ -312,51 +312,44 @@ public:
         }
         
         // For large number of insertions, we'll use a hybrid approach
-        // Get the current data into an array
-        T* keys = new T[root->size + num_keys];
-        P* values = new P[root->size + num_keys];
+        // First collect all current keys and values
+        T* existing_keys = new T[root->size];
+        P* existing_values = new P[root->size];
         
-        // Scan the current tree into the arrays
-        scan_and_destory_tree(root, keys, values, false);
+        // Get current data without destroying the tree
+        scan_and_destory_tree(root, existing_keys, existing_values, false);
         
-        // Merge the new data into the arrays
-        int insert_pos = root->size;
+        // Create a map to store key->value mappings, with newer values overwriting older ones
+        std::map<T, P> key_value_map;
+        
+        // Add existing data to the map
+        for (int i = 0; i < root->size; i++) {
+            key_value_map[existing_keys[i]] = existing_values[i];
+        }
+        
+        // Add new data to the map, overwriting existing keys with new values
         for (int i = 0; i < num_keys; i++) {
-            keys[insert_pos] = vs[i].first;
-            values[insert_pos] = vs[i].second;
-            insert_pos++;
+            key_value_map[vs[i].first] = vs[i].second;
         }
         
-        // Sort the merged array
-        // Use a helper vector for sorting by key while maintaining value association
-        std::vector<std::pair<T, int>> sort_helper(root->size + num_keys);
-        for (int i = 0; i < root->size + num_keys; i++) {
-            sort_helper[i] = std::make_pair(keys[i], i);
-        }
-        std::sort(sort_helper.begin(), sort_helper.end());
+        // Convert map back to arrays for bulk loading
+        T* new_keys = new T[key_value_map.size()];
+        P* new_values = new P[key_value_map.size()];
         
-        // Reorder the arrays and remove duplicates (keeping the most recent)
-        T* new_keys = new T[root->size + num_keys];
-        P* new_values = new P[root->size + num_keys];
-        int new_size = 0;
-        
-        for (int i = 0; i < root->size + num_keys; i++) {
-            // Skip duplicates (keep the most recent which will be later in the insertion order)
-            if (i > 0 && sort_helper[i].first == sort_helper[i-1].first) continue;
-            
-            int idx = sort_helper[i].second;
-            new_keys[new_size] = keys[idx];
-            new_values[new_size] = values[idx];
-            new_size++;
+        int i = 0;
+        for (const auto& kv : key_value_map) {
+            new_keys[i] = kv.first;
+            new_values[i] = kv.second;
+            i++;
         }
         
         // Destroy the old tree and build a new one with the merged data
         destroy_tree(root);
-        root = build_tree_bulk(new_keys, new_values, new_size);
+        root = build_tree_bulk(new_keys, new_values, key_value_map.size());
         
         // Clean up
-        delete[] keys;
-        delete[] values;
+        delete[] existing_keys;
+        delete[] existing_values;
         delete[] new_keys;
         delete[] new_values;
     }
