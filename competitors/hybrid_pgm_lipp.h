@@ -237,6 +237,8 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     if (should_flush && !is_flushing_.exchange(true, std::memory_order_acquire)) {
       // Signal the flush worker thread to start flushing with the real thread_id
       {
+        // Print debug message if needed
+        std::cout << "Thread " << thread_id << " triggered flush." << std::endl;
         std::lock_guard<std::mutex> lock(flush_mutex_);
         flush_queue_.push(thread_id);
         flush_cv_.notify_one();
@@ -293,8 +295,11 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     // If there's nothing to flush, we're done
     if (data_to_flush.empty()) {
       is_flushing_.store(false, std::memory_order_release);
+      std::cout << "Nothing to flush." << std::endl;
       return;
     }
+
+    std::cout << "Flushing " << data_to_flush.size() << " items from PGM to LIPP." << std::endl;
     
     // Track flushed keys for later removal
     std::unordered_set<KeyType> flushed_keys;
