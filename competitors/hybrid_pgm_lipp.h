@@ -59,7 +59,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     return lipp_.Build(data, num_threads);
   }
 
-  size_t EqualityLookup(const KeyType& lookup_key, uint32_t thread_id) const {
+  size_t EqualityLookup(const KeyType& lookup_key, uint32_t thread_id) {
     // Track lookup operation for adaptive flushing
     lookups_since_last_flush_++;
     
@@ -150,41 +150,30 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     if (is_flushing_.load(std::memory_order_relaxed)) {
       return;
     }
-    
-    // Check if we need to flush based on current state
+
     bool should_flush = false;
-    
+
     if (adaptive_mode_ == 0) {
-      // Fixed threshold mode
       should_flush = (pgm_size_ >= flush_threshold_count_);
     } else {
-      // Adaptive mode based on workload pattern
       size_t total_ops = lookups_since_last_flush_ + inserts_since_last_flush_;
-      if (total_ops > 1000) { // Only adapt after sufficient operations
+      if (total_ops > 1000) {
         double lookup_ratio = static_cast<double>(lookups_since_last_flush_) / total_ops;
-        
-        // For lookup-heavy workloads, flush more frequently (lower threshold)
-        // For insert-heavy workloads, flush less frequently (higher threshold)
         size_t adaptive_threshold = flush_threshold_count_;
         if (lookup_ratio > 0.8) {
-          // Lookup-heavy: flush earlier to improve lookup performance
           adaptive_threshold = flush_threshold_count_ / 2;
         } else if (lookup_ratio < 0.2) {
-          // Insert-heavy: delay flushing to batch more insertions
           adaptive_threshold = flush_threshold_count_ * 2;
         }
-        
         should_flush = (pgm_size_ >= adaptive_threshold);
       } else {
-        // Not enough operations to adapt yet, use default threshold
         should_flush = (pgm_size_ >= flush_threshold_count_);
       }
     }
-    
-    // If we should flush and no flush is currently in progress
+
     if (should_flush && !is_flushing_.exchange(true, std::memory_order_acquire)) {
-      // Start incremental flushing
-      IncrementalFlush(thread_id);
+        // Launch a background flush thread
+        std::thread(&HybridPGMLIPP::FlushWorker, this, thread_id).detach();
     }
   }
 
