@@ -32,18 +32,14 @@ template <class KeyType, class SearchClass, size_t pgm_error = 64>
 class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
  public:
   HybridPGMLIPP(const std::vector<int>& params = std::vector<int>())
-      : lipp_(params), pgm_(params), pgm_size_(0), is_flushing_(false)
+      : lipp_(params), pgm_(params), pgm_size_(0), is_flushing_(false),
+        lookups_since_last_flush_(0), inserts_since_last_flush_(0), flush_count_(0)
   {
     // Parse parameters with validation
     flush_threshold_ = (params.size() > 0 && params[0] > 0) ? params[0] : 5;
     batch_size_ = (params.size() > 1 && params[1] > 0) ? params[1] : 1000;
     flushing_mode_ = (params.size() > 2 && params[2] >= 0 && params[2] <= 1) ? 
         static_cast<FlushingMode>(params[2]) : WORKLOAD_ADAPTIVE;
-    
-    // Stats for diagnostics
-    flush_count_ = 0;
-    lookups_since_last_flush_ = 0;
-    inserts_since_last_flush_ = 0;
     
     // Initialize the flush worker thread
     flush_worker_active_ = true;
@@ -76,11 +72,8 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   }
 
   size_t EqualityLookup(const KeyType& lookup_key, uint32_t thread_id) {
-    // Track lookup operation for adaptive flushing
-    {
-      std::lock_guard<std::mutex> lock(stats_mutex_);
-      lookups_since_last_flush_++;
-    }
+    // Track lookup operation for adaptive flushing using atomic increment
+    lookups_since_last_flush_.fetch_add(1, std::memory_order_relaxed);
     
     // First try to find in PGM (where newer data is)
     size_t pgm_res;
@@ -117,11 +110,8 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   }
 
   void Insert(const KeyValue<KeyType>& data, uint32_t thread_id) {
-    // Track insert operation for adaptive flushing
-    {
-      std::lock_guard<std::mutex> lock(stats_mutex_);
-      inserts_since_last_flush_++;
-    }
+    // Track insert operation for adaptive flushing using atomic increment
+    inserts_since_last_flush_.fetch_add(1, std::memory_order_relaxed);
     
     // Insert into PGM data structures with exclusive lock
     {
@@ -132,7 +122,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
       // Update size with atomic to allow safe reading from other threads
       pgm_size_.fetch_add(1, std::memory_order_relaxed);
     }
-  
+
     // Check if we need to flush from PGM to LIPP
     // Pass the actual thread_id from the caller
     CheckAndTriggerFlush(thread_id);
@@ -170,7 +160,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     vec.push_back(std::to_string(flush_threshold_));
     vec.push_back(std::to_string(batch_size_));
     vec.push_back(std::to_string(flushing_mode_));
-    vec.push_back("flushes:" + std::to_string(flush_count_));
+    vec.push_back("flushes:" + std::to_string(flush_count_.load(std::memory_order_relaxed)));
     return vec;
   }
 
@@ -194,10 +184,9 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   std::atomic<size_t> pgm_size_; // Current size of PGM data
   std::atomic<bool> is_flushing_; // Flag for tracking flush state
   
-  // Statistics with thread-safe access
-  mutable size_t lookups_since_last_flush_;
-  mutable size_t inserts_since_last_flush_;
-  mutable std::mutex stats_mutex_;
+  // Statistics with atomic counters (more efficient than mutex)
+  mutable std::atomic<size_t> lookups_since_last_flush_;
+  mutable std::atomic<size_t> inserts_since_last_flush_;
   std::atomic<size_t> flush_count_; // Number of flushes performed
   
   // Flush worker thread management
@@ -222,14 +211,8 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
       should_flush = (pgm_size_.load(std::memory_order_relaxed) >= flush_threshold_count_);
     } else {
       // Adaptive mode based on workload pattern
-      size_t lookups = 0;
-      size_t inserts = 0;
-      
-      {
-        std::lock_guard<std::mutex> lock(stats_mutex_);
-        lookups = lookups_since_last_flush_;
-        inserts = inserts_since_last_flush_;
-      }
+      size_t lookups = lookups_since_last_flush_.load(std::memory_order_relaxed);
+      size_t inserts = inserts_since_last_flush_.load(std::memory_order_relaxed);
       
       size_t total_ops = lookups + inserts;
       if (total_ops > 1000) { // Only adapt after sufficient operations
@@ -255,8 +238,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     
     // If we should flush and no flush is currently in progress
     if (should_flush && !is_flushing_.exchange(true, std::memory_order_acquire)) {
-      // Signal the flush worker thread to start flushing
-      // Use the provided thread_id instead of hardcoded 0
+      // Signal the flush worker thread to start flushing with the real thread_id
       {
         std::lock_guard<std::mutex> lock(flush_mutex_);
         flush_queue_.push(thread_id);
@@ -300,12 +282,9 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
 
   // Perform an incremental flush from PGM to LIPP
   void PerformFlush(uint32_t thread_id) {
-    // Reset operation counters
-    {
-      std::lock_guard<std::mutex> lock(stats_mutex_);
-      lookups_since_last_flush_ = 0;
-      inserts_since_last_flush_ = 0;
-    }
+    // Reset operation counters using atomic store
+    lookups_since_last_flush_.store(0, std::memory_order_relaxed);
+    inserts_since_last_flush_.store(0, std::memory_order_relaxed);
     
     // Create a copy of the current PGM data (snapshot)
     std::vector<KeyValue<KeyType>> data_to_flush;
