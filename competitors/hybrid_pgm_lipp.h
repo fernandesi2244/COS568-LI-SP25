@@ -206,6 +206,10 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     if (flushing_mode_ == FIXED_THRESHOLD) {
       // Fixed threshold mode
       should_flush = (pgm_size_.load(std::memory_order_relaxed) >= flush_threshold_count_);
+      std::cout << "Thread " << thread_id << " - Fixed threshold mode: " 
+                << "PGM size: " << pgm_size_.load(std::memory_order_relaxed)
+                << ", Flush threshold: " << flush_threshold_count_
+                << ", Should flush: " << should_flush << std::endl;
     } else {
       // Adaptive mode based on workload pattern
       size_t lookups = lookups_since_last_flush_.load(std::memory_order_relaxed);
@@ -221,15 +225,26 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
         if (lookup_ratio > 0.8) {
           // Lookup-heavy: flush earlier to improve lookup performance
           adaptive_threshold = flush_threshold_count_ / 2;
+          std::cout << "Thread " << thread_id << " - Lookup-heavy workload detected." << std::endl;
         } else if (lookup_ratio < 0.2) {
           // Insert-heavy: delay flushing to batch more insertions
           adaptive_threshold = flush_threshold_count_ * 2;
+          std::cout << "Thread " << thread_id << " - Insert-heavy workload detected." << std::endl;
         }
         
         should_flush = (pgm_size_.load(std::memory_order_relaxed) >= adaptive_threshold);
+
+        std::cout << "Thread " << thread_id << " - Adaptive threshold: " 
+                  << adaptive_threshold << ", PGM size: "
+                  << pgm_size_.load(std::memory_order_relaxed)
+                  << ", Should flush: " << should_flush << std::endl;
       } else {
         // Not enough operations to adapt yet, use default threshold
         should_flush = (pgm_size_.load(std::memory_order_relaxed) >= flush_threshold_count_);
+        std::cout << "Thread " << thread_id << " - Not enough operations to adapt yet." 
+                  << ", PGM size: " << pgm_size_.load(std::memory_order_relaxed)
+                  << ", Default threshold: " << flush_threshold_count_
+                  << ", Should flush: " << should_flush << std::endl;
       }
     }
 
