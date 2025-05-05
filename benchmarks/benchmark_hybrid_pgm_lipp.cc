@@ -41,129 +41,120 @@ void benchmark_64_hybrid_pgm_lipp(tli::Benchmark<uint64_t>& benchmark, const std
     // Facebook dataset
     if (dataset_name.find("fb_100M") != std::string::npos) {
       if (is_insertion_heavy) {
-        // Insertion-heavy (90% inserts) for Facebook dataset - fixed thresholds only
-        // Use absolute counts rather than percentages: 50k, 100k, 200k, 400k keys
-        std::vector<int> params_50k = {50, 0};   // 50k threshold
-        std::vector<int> params_100k = {100, 0}; // 100k threshold
-        std::vector<int> params_200k = {200, 0}; // 200k threshold
-        std::vector<int> params_400k = {400, 0}; // 400k threshold
+        // Insertion-heavy (90% inserts) for Facebook dataset - fixed thresholds
+        // Use absolute counts in thousands >= 250k
+        std::vector<int> params_250k = {250, 0};  // 250k threshold
+        std::vector<int> params_500k = {500, 0};  // 500k threshold
+        std::vector<int> params_750k = {750, 0};  // 750k threshold
+        std::vector<int> params_1000k = {1000, 0}; // 1000k threshold
         
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_50k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_100k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_200k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_400k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_100k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, ExponentialSearch<record>, 64>>(params_100k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_500k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_750k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_1000k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_500k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, ExponentialSearch<record>, 64>>(params_500k);
       } else {
-        // Lookup-heavy (10% inserts) for Facebook dataset - fixed thresholds only
-        // Lower thresholds since there are fewer inserts
-        std::vector<int> params_10k = {10, 0};   // 10k threshold
-        std::vector<int> params_25k = {25, 0};   // 25k threshold
-        std::vector<int> params_50k = {50, 0};   // 50k threshold
-        std::vector<int> params_100k = {100, 0}; // 100k threshold
+        // Lookup-heavy (10% inserts) for Facebook dataset - fixed thresholds
+        std::vector<int> params_250k = {250, 0};  // 250k threshold
+        std::vector<int> params_500k = {500, 0};  // 500k threshold
         
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_10k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_25k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_50k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_100k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 16>>(params_25k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, ExponentialSearch<record>, 32>>(params_25k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_500k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 16>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, ExponentialSearch<record>, 32>>(params_250k);
       }
     }
     // Books dataset
     else if (dataset_name.find("books_100M") != std::string::npos) {
       if (is_insertion_heavy) {
-        // Insertion-heavy (90% inserts) for Books dataset - fixed thresholds only
-        std::vector<int> params_50k = {50, 0};   // 50k threshold
-        std::vector<int> params_100k = {100, 0}; // 100k threshold
-        std::vector<int> params_200k = {200, 0}; // 200k threshold
-        std::vector<int> params_400k = {400, 0}; // 400k threshold
+        // Insertion-heavy (90% inserts) for Books dataset - fixed thresholds
+        std::vector<int> params_250k = {250, 0};  // 250k threshold
+        std::vector<int> params_500k = {500, 0};  // 500k threshold
+        std::vector<int> params_750k = {750, 0};  // 750k threshold
+        std::vector<int> params_1000k = {1000, 0}; // 1000k threshold
         
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_50k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_100k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_200k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_400k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_100k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, InterpolationSearch<record>, 128>>(params_100k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_500k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_750k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_1000k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_500k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, InterpolationSearch<record>, 128>>(params_500k);
       } else {
-        // Lookup-heavy (10% inserts) for Books dataset - fixed thresholds only
-        std::vector<int> params_10k = {10, 0};   // 10k threshold
-        std::vector<int> params_25k = {25, 0};   // 25k threshold
-        std::vector<int> params_50k = {50, 0};   // 50k threshold
-        std::vector<int> params_100k = {100, 0}; // 100k threshold
+        // Lookup-heavy (10% inserts) for Books dataset - fixed thresholds
+        std::vector<int> params_250k = {250, 0};  // 250k threshold
+        std::vector<int> params_500k = {500, 0};  // 500k threshold
         
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_10k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_25k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_50k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_100k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_25k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, InterpolationSearch<record>, 64>>(params_25k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, ExponentialSearch<record>, 64>>(params_25k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_500k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, InterpolationSearch<record>, 64>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, ExponentialSearch<record>, 64>>(params_250k);
       }
     }
     // OSMC dataset
     else if (dataset_name.find("osmc_100M") != std::string::npos) {
       if (is_insertion_heavy) {
-        // Insertion-heavy (90% inserts) for OSMC dataset - fixed thresholds only
-        std::vector<int> params_50k = {50, 0};   // 50k threshold
-        std::vector<int> params_100k = {100, 0}; // 100k threshold
-        std::vector<int> params_200k = {200, 0}; // 200k threshold
-        std::vector<int> params_400k = {400, 0}; // 400k threshold
+        // Insertion-heavy (90% inserts) for OSMC dataset - fixed thresholds
+        std::vector<int> params_250k = {250, 0};  // 250k threshold
+        std::vector<int> params_500k = {500, 0};  // 500k threshold
+        std::vector<int> params_750k = {750, 0};  // 750k threshold
+        std::vector<int> params_1000k = {1000, 0}; // 1000k threshold
         
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_50k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_100k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_200k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_400k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_100k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, LinearSearch<record>, 64>>(params_100k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_500k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_750k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_1000k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_500k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, LinearSearch<record>, 64>>(params_500k);
       } else {
-        // Lookup-heavy (10% inserts) for OSMC dataset - fixed thresholds only
-        std::vector<int> params_10k = {10, 0};   // 10k threshold
-        std::vector<int> params_25k = {25, 0};   // 25k threshold
-        std::vector<int> params_50k = {50, 0};   // 50k threshold
-        std::vector<int> params_100k = {100, 0}; // 100k threshold
+        // Lookup-heavy (10% inserts) for OSMC dataset - fixed thresholds
+        std::vector<int> params_250k = {250, 0};  // 250k threshold
+        std::vector<int> params_500k = {500, 0};  // 500k threshold
         
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_10k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_25k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_50k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_100k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 16>>(params_25k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_25k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_500k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 16>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_250k);
       }
     }
     // Default for any other dataset
     else {
       std::cout << "Unknown dataset: " << dataset_name << std::endl;
       if (is_insertion_heavy) {
-        // Insertion-heavy default configuration - fixed thresholds only
-        std::vector<int> params_100k = {100, 0}; // 100k threshold
-        std::vector<int> params_200k = {200, 0}; // 200k threshold
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_100k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_200k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_100k);
+        // Insertion-heavy default configuration - fixed thresholds
+        std::vector<int> params_250k = {250, 0};  // 250k threshold
+        std::vector<int> params_500k = {500, 0};  // 500k threshold
+        
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_500k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 128>>(params_250k);
       } else {
-        // Lookup-heavy default configuration - fixed thresholds only
-        std::vector<int> params_25k = {25, 0};   // 25k threshold
-        std::vector<int> params_50k = {50, 0};   // 50k threshold
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_25k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_50k);
-        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_25k);
+        // Lookup-heavy default configuration - fixed thresholds
+        std::vector<int> params_250k = {250, 0};  // 250k threshold
+        std::vector<int> params_500k = {500, 0};  // 500k threshold
+        
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_250k);
+        benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_250k);
       }
     }
   } else {
     // For non-mixed workloads, use default configurations with fixed thresholds
     if (filename.find("0.000000i") != std::string::npos) {
       // Lookup-only workload
-      std::vector<int> params_50k = {50, 0};  // 50k threshold
-      benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 16>>(params_50k);
-      benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_50k);
-      benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_50k);
+      std::vector<int> params_250k = {250, 0};  // 250k threshold
+      
+      benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 16>>(params_250k);
+      benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_250k);
+      benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_250k);
     } else if (filename.find("0m") != std::string::npos) {
       // Non-mixed workload
-      std::vector<int> params_50k = {50, 0};  // 50k threshold
-      benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_50k);
-      benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_50k);
-      benchmark.template Run<HybridPGMLIPP<uint64_t, ExponentialSearch<record>, 64>>(params_50k);
+      std::vector<int> params_250k = {250, 0};  // 250k threshold
+      
+      benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 32>>(params_250k);
+      benchmark.template Run<HybridPGMLIPP<uint64_t, BranchingBinarySearch<record>, 64>>(params_250k);
+      benchmark.template Run<HybridPGMLIPP<uint64_t, ExponentialSearch<record>, 64>>(params_250k);
     }
   }
 }
