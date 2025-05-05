@@ -251,6 +251,8 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     
     if (flushing_mode_ == FIXED_THRESHOLD) {
       // Fixed threshold mode
+      std::cout << "PGM front size: " << pgm_front_size_.load(std::memory_order_relaxed) << std::endl;
+      std::cout << "Flush threshold count: " << flush_threshold_count_ << std::endl;
       should_flush = (pgm_front_size_.load(std::memory_order_relaxed) >= flush_threshold_count_);
     } else {
       // Adaptive mode based on workload pattern
