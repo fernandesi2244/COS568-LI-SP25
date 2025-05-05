@@ -27,7 +27,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   uint64_t Build(const std::vector<KeyValue<KeyType>>& data, size_t num_threads) {
     // Save initial data size to calculate threshold
     initial_data_size_ = data.size();
-    flush_threshold_count_ = initial_data_size_ * flush_threshold_ / 100;
+    flush_threshold_count_ = initial_data_size_ * flush_threshold_ / 100 / 10;
 
     return lipp_.Build(data, num_threads);
   }
