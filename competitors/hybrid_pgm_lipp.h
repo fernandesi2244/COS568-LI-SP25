@@ -18,7 +18,7 @@ template <class KeyType, class SearchClass, size_t pgm_error = 64> //, size_t fl
 class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
  public:
   HybridPGMLIPP(const std::vector<int>& params = std::vector<int>())
-      : lipp_(params), pgm_(params), pgm_size_(0)
+      : lipp_(params), pgm_(params), pgm_size_(0), flush_count_(0)
   {
     // Use the template parameter as default, but allow override from params
     flush_threshold_ = params.size() > 0 ? params[0] : 5; // 5 is default flush threshold percentage
@@ -77,6 +77,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     vec.push_back(SearchClass::name());
     vec.push_back(std::to_string(pgm_error));
     vec.push_back(std::to_string(flush_threshold_));
+    vec.push_back(std::to_string(flush_count_)); // Added flush count to variants
     return vec;
   }
 
@@ -91,12 +92,18 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   size_t flush_threshold_; // Percentage of initial data size
   size_t flush_threshold_count_; // Absolute count for flushing
   size_t pgm_size_ = 0; // Current size of PGM data
+  
+  // Flush counter
+  size_t flush_count_; // Added counter to track number of flushes
 
   // Flush data from PGM to LIPP if needed
   void FlushIfNeeded(uint32_t thread_id) {
     if (pgm_size_ < flush_threshold_count_) {
       return; // No need to flush yet
     }
+
+    // Increment flush counter
+    flush_count_++;
 
     // Move data from PGM to LIPP
     for (const auto& data : pgm_data_) {
@@ -105,7 +112,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     pgm_data_.clear(); // Clear PGM data after moving to LIPP
     pgm_size_ = 0; // Reset PGM size
     pgm_ = DynamicPGM<KeyType, SearchClass, pgm_error>(std::vector<int>()); // Reset PGM
-    std::cout << "Flushed " << flush_threshold_count_ << " items from PGM to LIPP." << std::endl;
+    std::cout << "Flushed " << flush_threshold_count_ << " items from PGM to LIPP. Flush count: " << flush_count_ << std::endl;
   }
 };
 
