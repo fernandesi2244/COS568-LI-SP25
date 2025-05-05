@@ -46,7 +46,7 @@ def result_analysis():
             try:
                 insert_lookup_mix_1_result = insert_lookup_mix_1_results[insert_lookup_mix_1_results['index_name'] == index]
                 # compute average index_size across insert_lookup_mix_1_result['index_size1'], insert_lookup_mix_1_result['index_size2'], insert_lookup_mix_1_result['index_size3'], then select the one with the highest index_size
-                insertlookup_mix1_index_size[index][task] = insert_lookup_mix_1_result['index_size_bytes'].mean()
+                insertlookup_mix1_index_size[index][task] = insert_lookup_mix_1_result['index_size_bytes']
             except:
                 pass
             
@@ -55,7 +55,7 @@ def result_analysis():
             try:
                 insert_lookup_mix_2_result = insert_lookup_mix_2_results[insert_lookup_mix_2_results['index_name'] == index]
                 # compute average index_size across insert_lookup_mix_2_result['index_size1'], insert_lookup_mix_2_result['index_size2'], insert_lookup_mix_2_result['index_size3'], then select the one with the highest index_size
-                insertlookup_mix2_index_size[index][task] = insert_lookup_mix_2_result['index_size_bytes'].mean()
+                insertlookup_mix2_index_size[index][task] = insert_lookup_mix_2_result['index_size_bytes']
             except:
                 pass
     # plot the figure of index_size, x axis is the index, y axis is the index_size
@@ -148,7 +148,7 @@ def result_analysis():
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     
     # Save the figure
-    plt.savefig('benchmark_results_index_size.png', dpi=300)
+    plt.savefig('benchmark_results.png', dpi=300)
     plt.show()
     
     # Save data to CSV files for further analysis
