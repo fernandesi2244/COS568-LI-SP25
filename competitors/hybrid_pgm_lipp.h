@@ -243,6 +243,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   void CheckAndTriggerFlush(uint32_t thread_id) {
     // Skip if already flushing
     if (is_flushing_.load(std::memory_order_relaxed)) {
+      std::cout << "This should be constant if flush is truly asynchronous." << std::endl;
       return;
     }
     
