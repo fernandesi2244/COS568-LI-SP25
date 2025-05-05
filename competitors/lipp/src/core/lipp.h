@@ -10,6 +10,11 @@
 #include <vector>
 #include <cstring>
 #include <sstream>
+#include <algorithm>
+#include <utility>
+#include <functional>
+#include <thread>
+#include <atomic>
 
 typedef uint8_t bitmap_t;
 #define BITMAP_WIDTH (sizeof(bitmap_t) * 8)
@@ -294,10 +299,10 @@ public:
     }
 
     void bulk_insert(const V* vs, int num_keys) {
-        // If nothing to insert, return immediately
+        // Early exit for empty input
         if (num_keys == 0) return;
         
-        // If the tree is empty, use bulk_load instead
+        // If the tree is empty, use bulk_load
         if (root->size == 0) {
             bulk_load(vs, num_keys);
             return;
@@ -310,63 +315,73 @@ public:
             }
             return;
         }
-
-        std::cout << "It wasn't the case that the tree was empty or the number of insertions was small." << std::endl;
-        
-        // For large number of insertions, we'll use a hybrid approach
-        // First collect all current keys and values
+    
+        // Extract all current keys and values
         T* existing_keys = new T[root->size];
         P* existing_values = new P[root->size];
-        
-        std::cout << "Collecting existing keys and values..." << std::endl;
-        // Get current data without destroying the tree
         scan_and_destory_tree(root, existing_keys, existing_values, false);
-        std::cout << "Collected existing keys and values." << std::endl;
         
-        // Create a map to store key->value mappings, with newer values overwriting older ones
-        // std::map automatically stores keys in sorted order
-        std::map<T, P> key_value_map;
+        // Create arrays for merged data
+        size_t total_size = root->size + num_keys;
+        T* merged_keys = new T[total_size];
+        P* merged_values = new P[total_size];
         
-        std::cout << "Creating key-value map..." << std::endl;
-        // Add existing data to the map
-        for (int i = 0; i < root->size; i++) {
-            key_value_map[existing_keys[i]] = existing_values[i];
-        }
-        
-        // Add new data to the map, overwriting existing keys with new values
+        // Prepare new data array
+        std::vector<V> sorted_new_data;
+        sorted_new_data.reserve(num_keys);
         for (int i = 0; i < num_keys; i++) {
-            key_value_map[vs[i].first] = vs[i].second;
+            sorted_new_data.push_back(vs[i]);
         }
-
-        std::cout << "Created key-value map." << std::endl;
         
-        // Convert map back to arrays for bulk loading
-        const size_t total_keys = key_value_map.size();
-        T* new_keys = new T[total_keys];
-        P* new_values = new P[total_keys];
+        // Sort the new data
+        std::sort(sorted_new_data.begin(), sorted_new_data.end(), 
+                  [](const V& a, const V& b) { return a.first < b.first; });
         
-        // Extract from map to arrays - map iteration is already in sorted key order
-        int i = 0;
-        for (const auto& kv : key_value_map) {
-            new_keys[i] = kv.first;
-            new_values[i] = kv.second;
+        // Merge the sorted arrays (existing and new data)
+        size_t i = 0, j = 0, k = 0;
+        while (i < root->size && j < num_keys) {
+            if (existing_keys[i] < sorted_new_data[j].first) {
+                merged_keys[k] = existing_keys[i];
+                merged_values[k] = existing_values[i];
+                i++;
+            } else if (existing_keys[i] > sorted_new_data[j].first) {
+                merged_keys[k] = sorted_new_data[j].first;
+                merged_values[k] = sorted_new_data[j].second;
+                j++;
+            } else {
+                // Key already exists, newer value overrides
+                merged_keys[k] = sorted_new_data[j].first;
+                merged_values[k] = sorted_new_data[j].second;
+                i++;
+                j++;
+            }
+            k++;
+        }
+        
+        // Copy remaining items
+        while (i < root->size) {
+            merged_keys[k] = existing_keys[i];
+            merged_values[k] = existing_values[i];
             i++;
+            k++;
         }
-
-        std::cout << "Converted map back to arrays." << std::endl;
         
-        // The keys are already sorted due to std::map ordering
-        // Now destroy the old tree and build a new one with the merged data
+        while (j < num_keys) {
+            merged_keys[k] = sorted_new_data[j].first;
+            merged_values[k] = sorted_new_data[j].second;
+            j++;
+            k++;
+        }
+        
+        // Destroy the current tree and build a new one with merged data
         destroy_tree(root);
-        std::cout << "Starting to build new tree..." << std::endl;
-        root = build_tree_bulk(new_keys, new_values, total_keys);
-        std::cout << "New tree built." << std::endl;
+        root = build_tree_bulk(merged_keys, merged_values, k);
         
         // Clean up
         delete[] existing_keys;
         delete[] existing_values;
-        delete[] new_keys;
-        delete[] new_values;
+        delete[] merged_keys;
+        delete[] merged_values;
     }
 
 private:
