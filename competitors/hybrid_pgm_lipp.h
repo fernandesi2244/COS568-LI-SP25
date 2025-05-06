@@ -34,7 +34,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
     flush_thread_ = std::thread(&HybridPGMLIPP::FlushThread, this);
   }
 
-  ~HybridPGMLIPP() override {
+  ~HybridPGMLIPP() {
     {
       std::lock_guard<std::mutex> lg(flush_mutex_);
       stop_ = true;
