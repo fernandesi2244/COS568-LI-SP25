@@ -23,7 +23,8 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
         pgm_size_(0),
         flush_threshold_percent_(params.empty() ? 5 : params[0]),
         stop_flush_(false),
-        flush_in_progress_(false) {
+        flush_in_progress_(false),
+        flush_count_(0) {
     flush_thread_ = std::thread(&HybridPGMLIPP::AsyncFlushWorker, this);
   }
 
@@ -71,7 +72,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   }
 
   std::vector<std::string> variants() const override {
-    return {SearchClass::name(), std::to_string(pgm_error), std::to_string(flush_threshold_percent_)};
+    return {SearchClass::name(), std::to_string(pgm_error), std::to_string(flush_threshold_percent_), std::to_string(flush_count_.load())};
   }
 
  private:
@@ -92,6 +93,8 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
   std::atomic<bool> stop_flush_;
   std::atomic<bool> flush_in_progress_;
 
+  std::atomic<size_t> flush_count_;
+
   void AsyncFlushWorker() {
     while (!stop_flush_) {
       std::unique_lock<std::mutex> lock(flush_mutex_);
@@ -104,11 +107,12 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
         std::lock_guard<std::mutex> pgm_lock(pgm_mutex_);
         local_data.swap(pgm_data_);
         pgm_size_ = 0;
-        pgm_ = DynamicPGM<KeyType, SearchClass, pgm_error>(); // reset PGM
+        pgm_ = DynamicPGM<KeyType, SearchClass, pgm_error>();
       }
 
       if (!local_data.empty()) {
         lipp_.BulkInsert(local_data, 0);
+        flush_count_++;
       }
 
       flush_in_progress_ = false;
