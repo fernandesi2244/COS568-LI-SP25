@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def result_analysis():
-    tasks = ['fb'] #, 'osmc', 'books']
+    tasks = ['fb', 'osmc', 'books']
     indexs = ['BTree', 'DynamicPGM', 'LIPP', 'HybridPGMLIPP']
     # Create dictionaries to store index_size data for each index
     # lookuponly_index_size = {}

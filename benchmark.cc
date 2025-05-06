@@ -62,8 +62,8 @@ void execute_64_bit(tli::Benchmark<uint64_t>& benchmark, bool pareto,
                     const std::string& only, const std::string& /*filename*/) 
 {
   // Only run if user specifies --only=PGM or --only=BTree.
-  // check_only("PGM", benchmark_64_pgm<SearchClass>(benchmark, pareto, params));
-  // check_only("BTree", benchmark_64_btree<SearchClass>(benchmark, pareto, params));
+  check_only("PGM", benchmark_64_pgm<SearchClass>(benchmark, pareto, params));
+  check_only("BTree", benchmark_64_btree<SearchClass>(benchmark, pareto, params));
   check_only("DynamicPGM", benchmark_64_dynamic_pgm<SearchClass>(benchmark, pareto, params));
   check_only("LIPP", benchmark_64_lipp(benchmark));
   check_only("HybridPGMLIPP", benchmark_64_hybrid_pgm_lipp<SearchClass>(benchmark, pareto, params));
@@ -75,8 +75,8 @@ void execute_64_bit(tli::Benchmark<uint64_t>& benchmark, bool only_mode,
                     const std::string& only, const std::string& filename)
 {
   // Only run if user specifies --only=PGM or --only=BTree
-  // check_only("PGM", benchmark_64_pgm<record>(benchmark, filename));
-  // check_only("BTree", benchmark_64_btree<record>(benchmark, filename));
+  check_only("PGM", benchmark_64_pgm<record>(benchmark, filename));
+  check_only("BTree", benchmark_64_btree<record>(benchmark, filename));
   check_only("DynamicPGM", benchmark_64_dynamic_pgm<record>(benchmark, filename));
   check_only("LIPP", benchmark_64_lipp(benchmark));
   check_only("HybridPGMLIPP", benchmark_64_hybrid_pgm_lipp<record>(benchmark, filename));
