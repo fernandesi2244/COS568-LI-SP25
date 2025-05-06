@@ -23,7 +23,7 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
  public:
   HybridPGMLIPP(const std::vector<int>& params = std::vector<int>())
       : lipp_(params),
-        pgm_active_(params),
+        pgm_active_(new DynamicPGM<KeyType, SearchClass, pgm_error>(params)),
         pgm_size_(0),
         flush_count_(0),
         flush_in_progress_(false),
