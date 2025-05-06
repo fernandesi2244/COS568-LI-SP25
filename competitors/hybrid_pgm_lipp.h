@@ -23,7 +23,13 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
  public:
   HybridPGMLIPP(const std::vector<int>& params = std::vector<int>())
       : lipp_(params),
-        pgm_active_(new DynamicPGM<KeyType, SearchClass, pgm_error>(params)),
+        pgm_active_(params),
+        pgm_flushing_(params),        // ← explicitly construct the “flushing” PGM
+        active_data_(),               // ← default‐construct the vectors
+        flushing_data_(),
+        initial_data_size_(0),
+        flush_threshold_(params.size() > 0 ? params[0] : 5),
+        flush_threshold_count_(0),
         pgm_size_(0),
         flush_count_(0),
         flush_in_progress_(false),
