@@ -143,13 +143,13 @@ class HybridPGMLIPP : public Competitor<KeyType, SearchClass> {
       auto batch = std::move(flushing_data_);
       lock.unlock();
 
-      // // bulk-insert into LIPP (thread_id = 0)
-      // lipp_.BulkInsert(batch, 0);
+      // bulk-insert into LIPP (thread_id = 0)
+      lipp_.BulkInsert(batch, 0);
       
-      // Instead of bulk inserting, we can just insert one by one.
-      for (const auto& kv : batch) {
-        lipp_.Insert(kv, 0);
-      }
+      // // Instead of bulk inserting, we can just insert one by one.
+      // for (const auto& kv : batch) {
+      //   lipp_.Insert(kv, 0);
+      // }
 
       lock.lock();
       pgm_flushing_ = DynamicPGM<KeyType, SearchClass, pgm_error>({});
